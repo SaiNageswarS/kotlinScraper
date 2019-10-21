@@ -1,18 +1,16 @@
 package com.chloformLife
 
 import org.jsoup.Jsoup
-import java.io.File
 
-class EatRightBasketScraper {
-    private val source = "EatRightBasket"
+class EatRightBasketScraper: PriceScraper() {
+    override val source = "EatRightBasket"
+
     private val baseURL = "https://www.eatrightbasket.com/category/"
     private val categories = listOf("veggies", "fruit", "pulses-cereals",
         "flour-atta", "ghee-oil", "spices", "salt-sugar", "dry-fruits",
         "honey", "pickle", "healthy-snacks", "herbal-products", "personal-care")
 
-    fun getPrices(): List<ProductInfo> {
-        val productPriceData = mutableListOf<ProductInfo>()
-
+    override fun getPrices() = sequence {
         for (category in categories) {
             val doc = Jsoup.connect(baseURL + category).get()
             val productInfoList = doc.select(".product-info")
@@ -23,23 +21,14 @@ class EatRightBasketScraper {
 
                 val productInfo = ProductInfo(productName, price,
                     source)
-                productPriceData.add(productInfo)
+                yield(productInfo)
             }
 
             println("Finished $category")
         }
-
-        return productPriceData
     }
 }
 
 fun main() {
-    val productInfoList = EatRightBasketScraper().getPrices()
-
-    File("/Users/saisatch/EatRightBasketPrices.csv")
-        .printWriter().use { out ->
-            productInfoList.forEach {
-                out.println("${it.productName}, ${it.price}")
-            }
-        }
+    EatRightBasketScraper().scrapeAndWriteCSV("/Users/saisatch/EatRightBasketPrices.csv")
 }
